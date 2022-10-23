@@ -12,11 +12,16 @@ UDP_PORT = int(sys.argv[1])
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind(("0.0.0.0", UDP_PORT))
 
+hostname = socket.gethostname()
+IP = socket.gethostbyname(hostname)
+print(IP)
+
 print("server is running")
 
 users = dict()
 followers = dict()
 follows = dict()
+rings = dict() #logical rings to use when tweeting
 
 def register(inputs):
     # register @<handle> <IPv4-address> <port1> <port2> <port3>
@@ -136,6 +141,22 @@ def followss():
         output += key + " " + str(followers[key])
     return output.encode("utf-8")
 
+def tweet(input):
+    handle = inputs[1][1:]
+    info = inputs[2]
+    output = "tweet " + handle
+    logicalRing = list()
+    logicalRing.append(handle)
+
+    for f in followers[handle]:
+        logicalRing.append(user[f][1])
+
+    rings[handle] = logicalRing
+
+
+
+    return output.encode("utf-8")
+
 while True:
     msg, addr = sock.recvfrom(1024)  # buffer size is 1024 bytes
     msg = msg.decode("utf-8")
@@ -162,6 +183,9 @@ while True:
 
     elif inputs[0] == "print":
         reply += query() + followss()
+
+    elif inputs[0] == "tweet":
+        reply = tweet(input)
 
     else:
         reply = b"bad request"
